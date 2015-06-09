@@ -861,7 +861,7 @@ int main(int argc, char* argv[])
 
 	printf("Again if we go right, we have %s and %s",get("k101"),get("phone"));
 
-	/*displaytable();*/
+	displaytable();
 	cleanup();
 
 	//hash test end**********************************************************************************************************
