@@ -16,6 +16,132 @@ class A;
 #define MAX_LEN 10000
 
 
+//hash begin***********************************************************************************************************
+typedef struct _node
+{
+	char *name;
+	char *desc;
+	struct _node *next;
+} node;
+
+#define HASHSIZE 101
+static node* hashtab[HASHSIZE];
+
+void inithashtab()
+{
+	int i;
+	for(i=0; i < HASHSIZE; i++)
+		hashtab[i]=NULL;
+}
+
+unsigned int hashfun(char *s)
+{
+	unsigned int h=0;
+	for(; *s; s++)
+		h=*s+h*31;
+	return h%HASHSIZE;
+}
+
+node* lookup(char *n)
+{
+	unsigned int hi=hashfun(n);
+	node* np=hashtab[hi];
+	for(; np!=NULL; np=np->next)
+	{
+		if(!strcmp(np->name,n))
+			return np;
+	}
+
+	return NULL;
+}
+
+char* m_strdup(char *o)
+{
+	int l=strlen(o)+1;
+	char *ns=(char*)malloc(l*sizeof(char));
+	strcpy(ns,o);
+	if(ns==NULL)
+		return NULL;
+	else
+		return ns;
+}
+
+char* get(char* name)
+{
+	node* n=lookup(name);
+	if(n==NULL)
+		return NULL;
+	else
+		return n->desc;
+}
+
+int install(char* name,char* desc)
+{
+	unsigned int hi;
+	node* np;
+	if((np=lookup(name))==NULL)
+	{
+		hi=hashfun(name);
+		np=(node*)malloc(sizeof(node));
+		if(np==NULL)
+			return 0;
+		np->name=m_strdup(name);
+		if(np->name==NULL) return 0;
+		np->next=hashtab[hi];//现有的hashtab数组保存的是最近插入的节点地址，需要先保存在当前插入节点的next指针里面
+		hashtab[hi]=np;
+	}
+	else
+		free(np->desc);//如果已存在，则需要free掉原来的值，保存新值
+	np->desc=m_strdup(desc);
+	if(np->desc==NULL) return 0;
+
+	return 1;
+}
+
+/* A pretty useless but good debugging function,
+which simply displays the hashtable in (key.value) pairs
+*/
+void displaytable()
+{
+	int i;
+	node *t;
+	for(i=0; i < HASHSIZE; i++)
+	{
+		if(hashtab[i]==NULL)
+			printf("()");
+		else
+		{
+			t=hashtab[i];
+			printf("(");
+			for(; t!=NULL; t=t->next)
+				printf("(%s.%s) ",t->name,t->desc);
+			printf(".)");
+		}
+	}
+}
+
+void cleanup()
+{
+	int i;
+	node *np,*t;
+	for(i=0; i < HASHSIZE; i++)
+	{
+		if(hashtab[i]!=NULL)
+		{
+			np=hashtab[i];
+			while(np!=NULL)
+			{
+				t=np->next;
+				free(np->name);
+				free(np->desc);
+				free(np);
+				np=t;
+			}
+		}
+	}
+}
+
+//hash end***********************************************************************************************************
 
 
 template<class T>
@@ -719,44 +845,45 @@ int AmtCompare(double dAmt1, double dAmt2)
 int main(int argc, char* argv[])
 {
 
-	double a = 9999999999999999.99;
-	cout << a << endl;
-	char *pMem = NULL;
-	GetMemory(&pMem, 100);
-	memset(pMem, 0, sizeof(100));
-	strcpy(pMem, "abc");
-	int iji = 789;
-	fun(iji);
+	//hash test begin********************************************************************************************************
+	int i;
+	char* names[]= {"name","address","phone","k101","k110"};
+	char* descs[]= {"Sourav","Sinagor","26300788","Value1","Value2"};
 
-	char buf[MAX_LEN];
-	int u;
-	//gets(buf);
-	bool badsf =CheckByteOrder();
+	inithashtab();
+	for(i=0; i < 5; i++)
+		install(names[i],descs[i]);
+
+	printf("Done");
+	printf("If we didnt do anything wrong..""we should see %s\n",get("k110"));
+
+	install("phone","9433120451");
+
+	printf("Again if we go right, we have %s and %s",get("k101"),get("phone"));
+
+	/*displaytable();*/
+	cleanup();
+
+	//hash test end**********************************************************************************************************
+	
+	//double a = 9999999999999999.99;
+	//cout << a << endl;
+	//char *pMem = NULL;
+	//GetMemory(&pMem, 100);//
+	//memset(pMem, 0, sizeof(100));
+	//strcpy(pMem, "abc");
+	//int iji = 789;
+	//fun(iji);
+
+	//char buf[MAX_LEN];
+	//int u;
+	////gets(buf);
+	//bool badsf =CheckByteOrder();
 
 
-	char szSql[2048+1] = {0};
+	//char szSql[2048+1] = {0};
 
 
-	// 更新【对账通知表】对账状态为对账平
-	sprintf(szSql, "UPDATE T_CIPS_CHKTOTAL_NTC SET CHKSTATE = '%s'"
-		 "WHERE CHKDRCTBANK = '%s'"
-		 "AND CHKDATE= '%s'",
-		"1",
-		"1",
-		"1");
-
-	printf(szSql);
-
-	double a16 = 9999999999999999.99;
-	double b17 = 99999999999999999.99;
-	double c12 = 999999999999.99;
-	int asadf = sizeof(double);
-
-	int nasdf = AmtCompare(c12, 999999999999.99);
-
-
-//	fgets(buf, sizeof(buf) - 1, stdin);
-	int i = 1;
 
 	
 	//////////////////////////////////////////////////////////////////////////
@@ -1094,9 +1221,6 @@ void Bubble_Sort(int A[], int n)
 			break;
 	}
 }
-
-
-
 
 
 //快速排序
